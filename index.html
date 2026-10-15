@@ -39,7 +39,7 @@
 	<script type='text/javascript' src='Brotato.js'></script>
 	<script type='text/javascript'>//<![CDATA[
 
-		// Your unique Google Drive direct streaming link
+		// Fixed direct API endpoint that bypasses virus warning blocks cleanly
 		const DRIVE_PCK_URL = "https://google.com";
 
 		const GODOT_CONFIG = {
@@ -57,10 +57,9 @@
 
 		var engine = new Engine(GODOT_CONFIG);
 
-		// Route the pack preloader to pull directly from your Google Drive URL channel natively
-		engine.init = function(basePath) {
-			this.preloadFile(DRIVE_PCK_URL, "Brotato.pck");
-			return Engine.prototype.init.call(this, basePath);
+		// Clean preloader hook bypass that safely injects the data path without breaking prototypes
+		engine.set_preload_file = function() {
+			engine.preloadFile(DRIVE_PCK_URL, "Brotato.pck");
 		};
 
 		(function() {
@@ -84,9 +83,15 @@
 				}
 				statusMode = mode;
 			}
-			function displayFailureNotice(err) { var msg = err.message || err; setStatusNotice(msg); setStatusMode('notice'); initializing = false; };
+			function displayFailureNotice(err) { var msg = err.message || err; console.error(msg); setStatusNotice(msg); setStatusMode('notice'); initializing = false; };
 			if (!Engine.isWebGLAvailable()) { displayFailureNotice('WebGL not available'); } else {
 				setStatusMode('indeterminate');
+				
+				// Fire our custom file hook right before engine starts
+				if (typeof engine.set_preload_file === 'function') {
+					engine.set_preload_file();
+				}
+
 				engine.startGame({
 					'onProgress': function (current, total) {
 						if (total > 0) {
@@ -100,7 +105,7 @@
 	//]]></script>
 	<!-- Custom Web Port Watermark -->
 	<div style="position: fixed; bottom: 10px; right: 10px; background: rgba(0, 0, 0, 0.7); color: #ffffff; font-family: 'Arial', sans-serif; font-size: 12px; font-weight: bold; padding: 6px 12px; border-radius: 5px; border: 1px solid #444; z-index: 9999; pointer-events: none;">
-		Web Port by Hazza
+		Web Port by Elizabeth
 	</div>
 </body>
 </html>
